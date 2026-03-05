@@ -4,7 +4,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from gen import normalize_background, normalize_style, write_gallery
+from gen import (
+    normalize_background,
+    normalize_output_format,
+    normalize_style,
+    write_gallery,
+)
 
 
 def test_normalize_background_allows_empty_for_non_gpt_models():
@@ -53,6 +58,19 @@ def test_normalize_style_warns_when_model_does_not_support_flag(capsys):
 def test_normalize_style_rejects_invalid_values():
     with pytest.raises(ValueError, match="Invalid --style"):
         normalize_style("dall-e-3", "cinematic")
+
+
+def test_normalize_output_format_allows_empty_for_non_gpt_models():
+    assert normalize_output_format("dall-e-3", "jpeg") == ""
+
+
+def test_normalize_output_format_normalizes_jpg_alias():
+    assert normalize_output_format("gpt-image-1", "jpg") == "jpeg"
+
+
+def test_normalize_output_format_rejects_invalid_values():
+    with pytest.raises(ValueError, match="Invalid --output-format"):
+        normalize_output_format("gpt-image-1", "svg")
 
 
 def test_write_gallery_escapes_prompt_xss():

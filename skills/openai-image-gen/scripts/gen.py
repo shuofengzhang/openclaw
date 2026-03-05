@@ -117,6 +117,26 @@ def normalize_style(model: str, style: str) -> str:
     return value
 
 
+def normalize_output_format(model: str, output_format: str) -> str:
+    """Normalize output format for GPT image models and validate allowed values."""
+    if not model.startswith("gpt-image"):
+        return ""
+
+    value = output_format.strip().lower()
+    if not value:
+        return ""
+
+    if value == "jpg":
+        value = "jpeg"
+
+    allowed = {"png", "jpeg", "webp"}
+    if value not in allowed:
+        raise ValueError(
+            f"Invalid --output-format '{output_format}'. Allowed values: png, jpeg, webp."
+        )
+    return value
+
+
 def request_images(
     api_key: str,
     prompt: str,
@@ -239,13 +259,14 @@ def main() -> int:
     try:
         normalized_background = normalize_background(args.model, args.background)
         normalized_style = normalize_style(args.model, args.style)
+        normalized_output_format = normalize_output_format(args.model, args.output_format)
     except ValueError as e:
         print(str(e), file=sys.stderr)
         return 2
 
     # Determine file extension based on output format
-    if args.model.startswith("gpt-image") and args.output_format:
-        file_ext = args.output_format
+    if args.model.startswith("gpt-image") and normalized_output_format:
+        file_ext = normalized_output_format
     else:
         file_ext = "png"
 
@@ -259,7 +280,7 @@ def main() -> int:
             size,
             quality,
             normalized_background,
-            args.output_format,
+            normalized_output_format,
             normalized_style,
         )
         data = res.get("data", [{}])[0]
